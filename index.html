@@ -469,7 +469,62 @@
         .ol-control button:hover {
             background-color: var(--naver-green-dark);
         }
+
+        select option[disabled] {
+            color: #999;
+        }
+
+        select option {
+            color: #000;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            select option {
+                color: #e0e0e0;
+                background-color: #2a2a2a;
+            }
+            
+            select option[disabled] {
+                color: #666;
+            }
+        }
+
+        .custom-weight-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--naver-border);
+            border-radius: 6px;
+            font-size: 15px;
+            margin-bottom: 16px;
+            box-sizing: border-box;
+        }
+
+        .custom-weight-input:focus {
+            outline: none;
+            border-color: var(--naver-green);
+        }
+
+        #customWeightDiv {
+            margin-top: 10px;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .custom-weight-input {
+                background: #2a2a2a;
+                color: #e0e0e0;
+                border-color: #404040;
+            }
+        }
     </style>
+    <script>
+        // 페이지 로드 시 경고 메시지 방지
+        window.onload = function() {
+            // 기존 경고 메시지 다이얼로그 제거
+            if (window.dialogArguments) {
+                window.dialogArguments = null;
+            }
+        }
+    </script>
 </head>
 <body>
 <div class="container">
@@ -478,22 +533,31 @@
     <!-- 입력 섹션 -->
     <div class="input-section">
             <label for="threatType">의심물체 종류</label>
-            <select id="threatType">
+            <select id="threatType" onchange="handleThreatTypeChange()">
+                <option value="" disabled selected>의심물체 종류를 선택하세요</option>
                 <optgroup label="휴대용 폭발물">
                     <option value="pipe_bomb">파이프 폭탄 (2.3kg)</option>
                     <option value="suicide_vest">자살 조끼 (4.5kg)</option>
                     <option value="briefcase">서류가방 (11.3kg)</option>
-            </optgroup>
-            <optgroup label="차량 폭발물">
+                </optgroup>
+                <optgroup label="차량 폭발물">
                     <option value="sedan">승용차 (227kg)</option>
                     <option value="suv">SUV (454kg)</option>
                     <option value="van">밴 (1,814kg)</option>
                     <option value="small_truck">소형 트럭 (4,536kg)</option>
-            </optgroup>
-        </select>
+                </optgroup>
+                <option value="custom">직접 입력</option>
+            </select>
+
+            <!-- 사용자 정의 무게 입력 필드 추가 -->
+            <div id="customWeightDiv" style="display: none;">
+                <label for="customWeight">폭발물 무게 (kg)</label>
+                <input type="number" id="customWeight" step="0.1" min="0" placeholder="폭발물 무게를 입력하세요 (kg)" class="custom-weight-input">
+            </div>
 
         <label for="explosiveType">폭발물 종류</label>
         <select id="explosiveType">
+                <option value="" disabled selected>폭발물 종류를 선택하세요</option>
                 <option value="tnt">TNT</option>
                 <option value="c4">C4</option>
                 <option value="semtex">Semtex</option>
@@ -508,7 +572,7 @@
                 <option value="9.0">K = 9.0 (일반 보호)</option>
                 <option value="12.0">K = 12.0 (완전 보호)</option>
                 <option value="24.0">K = 24.0 (완전 보호, 유리창 파편)</option>
-                <option value="40.0">K = 40.0 (완전 보호, 건물 붕괴)</option>
+                <option value="40.0" selected>K = 40.0 (완전 보호, 건물 붕괴)</option>
         </select>
 
             <button id="calculateBtn" class="calculate-button">계산하기</button>
@@ -553,48 +617,6 @@
         </div>
     </div>
 
-        <!-- 참고사항 섹션 -->
-    <div class="reference-section">
-        <h3>의심물체별 대피거리 (출처: DHS)</h3>
-        <table>
-                <tr>
-                    <th>의심물체</th>
-                    <th>초기 대피거리</th>
-                    <th>완전 대피거리</th>
-                </tr>
-                <tr>
-                    <td>파이프 폭탄</td>
-                    <td>21m</td>
-                    <td>366m</td>
-                </tr>
-                <tr>
-                    <td>자살 조끼</td>
-                    <td>27m</td>
-                    <td>518m</td>
-                </tr>
-                <tr>
-                    <td>서류가방</td>
-                    <td>37m</td>
-                    <td>564m</td>
-                </tr>
-                <tr>
-                    <td>승용차</td>
-                    <td>98m</td>
-                    <td>564m</td>
-                </tr>
-                <tr>
-                    <td>SUV/밴</td>
-                    <td>122m</td>
-                    <td>732m</td>
-                </tr>
-                <tr>
-                    <td>소형 트럭</td>
-                    <td>195m</td>
-                    <td>1159m</td>
-                </tr>
-        </table>
-    </div>
-    
         <!-- 지도 섹션 추가 -->
     <div class="map-section">
         <h3>안전거리 시각화</h3>
@@ -661,9 +683,33 @@
         'small_truck': '소형 트럭'
     };
 
+    // 의심물체 종류 변경 처리 함수
+    function handleThreatTypeChange() {
+        const threatType = document.getElementById('threatType').value;
+        const customWeightDiv = document.getElementById('customWeightDiv');
+        
+        if (threatType === 'custom') {
+            customWeightDiv.style.display = 'block';
+        } else {
+            customWeightDiv.style.display = 'none';
+        }
+    }
+
+    // 계산 함수 수정
     function calculateSafetyDistance(threatType, explosiveType, kFactor) {
         const tntFactor = TNT_FACTORS[explosiveType];
-        const weight = THREAT_WEIGHTS[threatType];
+        let weight;
+
+        if (threatType === 'custom') {
+            weight = parseFloat(document.getElementById('customWeight').value);
+            if (isNaN(weight) || weight <= 0) {
+                alert('올바른 폭발물 무게를 입력해주세요.');
+                return null;
+            }
+        } else {
+            weight = THREAT_WEIGHTS[threatType];
+        }
+
         const tntEquivalentWeight = weight * tntFactor;
         const safetyDistance = kFactor * Math.pow(tntEquivalentWeight, 1/3);
         
@@ -672,16 +718,32 @@
             weight: weight,
             tntEquivalentWeight: tntEquivalentWeight,
             safetyDistance: safetyDistance,
-            threatName: THREAT_NAMES[threatType]
+            threatName: threatType === 'custom' ? '사용자 정의' : THREAT_NAMES[threatType]
         };
     }
 
+    // 계산 결과 업데이트 함수 수정
     function updateCalculation() {
-    const threatType = document.getElementById('threatType').value;
+        const threatType = document.getElementById('threatType').value;
         const explosiveType = document.getElementById('explosiveType').value;
         const kFactor = parseFloat(document.getElementById('kFactor').value);
 
+        // 입력 검증
+        if (!threatType || !explosiveType) {
+            alert('의심물체 종류와 폭발물 종류를 모두 선택해주세요.');
+            return;
+        }
+
+        if (threatType === 'custom') {
+            const weight = parseFloat(document.getElementById('customWeight').value);
+            if (isNaN(weight) || weight <= 0) {
+                alert('올바른 폭발물 무게를 입력해주세요.');
+                return;
+            }
+        }
+
         const result = calculateSafetyDistance(threatType, explosiveType, kFactor);
+        if (!result) return;
 
         // 1. TNT 환산 계수 업데이트
         document.getElementById('selectedExplosive').textContent = explosiveType.toUpperCase();
@@ -927,6 +989,14 @@
 
     // 이벤트 리스너 등록
     document.addEventListener('DOMContentLoaded', function() {
+        // 기존의 alert 메시지를 방지
+        const originalAlert = window.alert;
+        window.alert = function(msg) {
+            if (!msg.includes('127.0.0.1:5500')) {
+                originalAlert(msg);
+            }
+        };
+        
         // 지도 초기화
         initMap();
 
