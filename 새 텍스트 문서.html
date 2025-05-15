@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>NPN 트랜지스터 회로 예시</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f9f9f9;
+      padding: 20px;
+    }
+    .diagram {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+    .box {
+      background: white;
+      border: 2px solid #333;
+      border-radius: 8px;
+      padding: 10px 20px;
+      margin: 5px;
+      text-align: center;
+      min-width: 150px;
+    }
+    .wire {
+      width: 4px;
+      height: 30px;
+      background: black;
+      margin: 2px;
+    }
+    .horizontal-wire {
+      height: 4px;
+      width: 60px;
+      background: black;
+      margin: 2px auto;
+    }
+    .row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 10px 0;
+    }
+    .label {
+      font-weight: bold;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <h1>NPN 트랜지스터 회로 예시</h1>
+  <div class="diagram">
+    <div class="box">🔋 건전지 (+)</div>
+    <div class="wire"></div>
+    <div class="box">💥 점화옥</div>
+    <div class="wire"></div>
+    <div class="box">C (컬렉터)</div>
+    <div class="wire"></div>
+    <div class="box">트랜지스터 (NPN)</div>
+    <div class="row">
+      <div>
+        <div class="horizontal-wire"></div>
+        <div class="box">저항 (1kΩ)</div>
+        <div class="wire"></div>
+        <div class="box">스위치</div>
+        <div class="wire"></div>
+        <div class="box">제어 신호 (예: 아두이노 핀)</div>
+        <div class="label">← B (베이스)</div>
+      </div>
+      <div style="width: 100px;"></div>
+      <div>
+        <div class="box">E (이미터)</div>
+        <div class="wire"></div>
+        <div class="box">건전지 (-)</div>
+      </div>
+    </div>
+  </div>
+  <p style="margin-top: 30px;">※ 회로 설명:<br>
+    - 건전지 + 단자에서 출발하여 점화옥 → 컬렉터(C) → 이미터(E) → 건전지 -로 연결됩니다.<br>
+    - 베이스(B)는 저항과 스위치, 제어신호(예: 아두이노 디지털 핀)로 구성되어 트랜지스터를 제어합니다.
+  </p>
+</body>
+</html>

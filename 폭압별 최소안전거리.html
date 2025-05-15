@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#03c75a">
+    <title>폭발물 최소안전거리 계산기</title>
+    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=발급받은_API_키를_입력하세요"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.15.1/css/ol.css">
+    <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.15.1/build/ol.js"></script>
+    <style>
+        /* 네이버 스타일 적용 */
+        :root {
+            --naver-green: #03c75a;
+            --naver-green-dark: #02b150;
+            --naver-border: #e5e5e5;
+            --naver-gray: #606060;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0;
+            padding: 10px;
+            font-family: -apple-system, BlinkMacSystemFont, "Malgun Gothic", "맑은 고딕", helvetica, "Apple SD Gothic Neo", sans-serif;
+            background-color: #f5f6f7;
+            color: #222;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 768px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            color: #1e1e23;
+            font-size: 20px;
+            font-weight: 700;
+            margin: 10px 0 20px;
+            text-align: center;
+        }
+
+        h3 {
+            color: #1e1e23;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 20px 0 10px;
+            padding-left: 8px;
+            border-left: 3px solid var(--naver-green);
+        }
+
+        .input-section {
+            background: #fff;
+            padding: 15px;
+            border: 1px solid var(--naver-border);
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+
+        .result-section {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+
+        .reference-section {
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px solid var(--naver-border);
+            border-radius: 8px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            color: var(--naver-gray);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--naver-border);
+            border-radius: 12px;
+            font-size: 16px;
+            margin-bottom: 15px;
+            background-color: #fff;
+        }
+
+        .calculate-button {
+            width: 100%;
+            padding: 15px;
+            background-color: var(--naver-green);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 10px;
+        }
+
+        .calculate-button:hover {
+            background-color: var(--naver-green-dark);
+        }
+
+        .calc-step {
+            padding: 15px;
+            border: 1px solid var(--naver-border);
+            border-radius: 12px;
+            margin-bottom: 15px;
+            background: #fff;
+        }
+
+        .calc-step h4 {
+            color: var(--naver-green);
+            margin: 0 0 12px 0;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .calc-step p {
+            margin: 8px 0;
+            font-size: 14px;
+        }
+
+        .calc-explanation {
+            color: #666;
+            font-size: 13px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed #ddd;
+        }
+
+        .final-result {
+            color: var(--naver-green);
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            padding: 10px;
+            background: #e8f5e9;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+
+        th, td {
+            padding: 12px;
+            border: 1px solid var(--naver-border);
+            text-align: center;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            color: var(--naver-gray);
+            font-weight: 600;
+        }
+
+        /* 결과값 강조 스타일 */
+        .result-section span {
+            color: var(--naver-green);
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        /* 커스텀 K-Factor 입력 스타일 */
+        #customKFactorDiv {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+
+        /* 반응형 디자인 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+
+            h2 {
+                font-size: 20px;
+            }
+
+            input, select, button {
+                font-size: 14px;
+            }
+        }
+
+        /* 기존 스타일에 추가 */
+        .sub-input {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 10px;
+            border: 1px solid var(--naver-border);
+        }
+
+        .dhs-recommendation {
+            background: #e8f5e9;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+            border-left: 4px solid var(--naver-green);
+        }
+
+        .dhs-recommendation h4 {
+            color: var(--naver-green);
+            margin: 0 0 10px 0;
+        }
+
+        optgroup {
+            font-weight: 600;
+            color: var(--naver-green);
+        }
+
+        .calculation-details {
+            background: #fff;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .map-section {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid var(--naver-border);
+            border-radius: 12px;
+        }
+
+        #map {
+            width: 100%;
+            height: 400px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .map-controls {
+            margin-bottom: 10px;
+        }
+
+        .map-button {
+            padding: 8px 16px;
+            background-color: var(--naver-green);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+
+        .map-button:hover {
+            background-color: var(--naver-green-dark);
+        }
+
+        /* OpenLayers 팝업 스타일 */
+        .ol-popup {
+            position: absolute;
+            background-color: white;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #cccccc;
+            bottom: 12px;
+            left: -50px;
+            min-width: 200px;
+        }
+
+        .ol-popup:after, .ol-popup:before {
+            top: 100%;
+            border: solid transparent;
+            content: " ";
+            height: 0;
+            width: 0;
+            position: absolute;
+            pointer-events: none;
+        }
+
+        .ol-popup:after {
+            border-top-color: white;
+            border-width: 10px;
+            left: 48px;
+            margin-left: -10px;
+        }
+
+        .ol-popup:before {
+            border-top-color: #cccccc;
+            border-width: 11px;
+            left: 48px;
+            margin-left: -11px;
+        }
+
+        .coordinate-inputs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        .coordinate-input-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .coordinate-input-group label {
+            margin-bottom: 0;
+            white-space: nowrap;
+        }
+
+        .coordinate-input-group input {
+            width: 140px;
+            padding: 8px;
+            border: 1px solid var(--naver-border);
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .map-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .coordinate-display {
+            margin: 10px 0;
+            font-size: 14px;
+            color: var(--naver-gray);
+        }
+
+        @media (max-width: 768px) {
+            .coordinate-inputs {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .coordinate-input-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .coordinate-input-group input {
+                width: 100%;
+            }
+
+            .map-buttons {
+                flex-direction: column;
+            }
+
+            .map-button {
+                width: 100%;
+                margin-right: 0;
+            }
+        }
+
+        .distance-tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .center-distance {
+            position: absolute;
+            background: white;
+            border: 1px solid var(--naver-border);
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 13px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 1000;
+            right: 10px;
+            top: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+        <h2>폭발물 최소안전거리 계산기</h2>
+    
+    <!-- 입력 섹션 -->
+    <div class="input-section">
+            <label for="threatType">의심물체 종류</label>
+            <select id="threatType">
+                <optgroup label="휴대용 폭발물">
+                    <option value="pipe_bomb">파이프 폭탄 (2.3kg)</option>
+                    <option value="suicide_vest">자살 조끼 (4.5kg)</option>
+                    <option value="briefcase">서류가방 (11.3kg)</option>
+            </optgroup>
+            <optgroup label="차량 폭발물">
+                    <option value="sedan">승용차 (227kg)</option>
+                    <option value="suv">SUV (454kg)</option>
+                    <option value="van">밴 (1,814kg)</option>
+                    <option value="small_truck">소형 트럭 (4,536kg)</option>
+            </optgroup>
+        </select>
+
+        <label for="explosiveType">폭발물 종류</label>
+        <select id="explosiveType">
+                <option value="tnt">TNT</option>
+                <option value="c4">C4</option>
+                <option value="semtex">Semtex</option>
+                <option value="anfo">ANFO</option>
+                <option value="dynamite">다이너마이트</option>
+        </select>
+
+        <label for="kFactor">안전거리 계수 (K-Factor)</label>
+        <select id="kFactor">
+                <option value="3.0">K = 3.0 (최소 이격거리)</option>
+                <option value="6.0">K = 6.0 (제한된 보호)</option>
+                <option value="9.0">K = 9.0 (일반 보호)</option>
+                <option value="12.0">K = 12.0 (완전 보호)</option>
+                <option value="24.0">K = 24.0 (완전 보호, 유리창 파편)</option>
+                <option value="40.0">K = 40.0 (완전 보호, 건물 붕괴)</option>
+        </select>
+
+            <button id="calculateBtn" class="calculate-button">계산하기</button>
+    </div>
+    
+    <!-- 결과 섹션 -->
+    <div class="result-section">
+        <h3>계산 결과</h3>
+        <div class="calculation-details">
+                <!-- 1. TNT 환산 계수 -->
+            <div class="calc-step">
+                <h4>1. TNT 환산 계수</h4>
+                <p>선택한 폭발물: <span id="selectedExplosive">-</span></p>
+                    <p>TNT 환산 계수: <span id="tntFactor">-</span></p>
+                    <div class="calc-explanation">
+                        * TNT 환산 계수는 선택한 폭발물의 폭발 위력을 TNT 기준으로 환산한 값입니다.
+                    </div>
+            </div>
+
+                <!-- 2. TNT 환산 질량 계산 -->
+            <div class="calc-step">
+                <h4>2. TNT 환산 질량 계산</h4>
+                <p>입력 무게: <span id="inputWeight">-</span></p>
+                    <p>계산식: <span id="massFormula">-</span></p>
+                    <p>TNT 환산 질량: <span id="tntMass">-</span></p>
+                    <div class="calc-explanation">
+                        * TNT 환산 질량 = 입력 무게 × TNT 환산 계수
+                    </div>
+            </div>
+
+                <!-- 3. 안전거리 계산 -->
+            <div class="calc-step">
+                <h4>3. 안전거리 계산</h4>
+                <p>선택한 K-Factor: <span id="selectedKFactor">-</span></p>
+                    <p>계산식: <span id="distanceFormula">-</span></p>
+                    <p class="final-result">K-Factor 적용 최소안전거리: <span id="safetyDistance">-</span></p>
+                    <div class="calc-explanation">
+                        * 안전거리 = K-Factor × (TNT 환산 질량)^(1/3)
+            </div>
+
+        </div>
+        </div>
+    </div>
+
+        <!-- 참고사항 섹션 -->
+    <div class="reference-section">
+        <h3>의심물체별 대피거리 (출처: DHS)</h3>
+        <table>
+                <tr>
+                    <th>의심물체</th>
+                    <th>초기 대피거리</th>
+                    <th>완전 대피거리</th>
+                </tr>
+                <tr>
+                    <td>파이프 폭탄</td>
+                    <td>21m</td>
+                    <td>366m</td>
+                </tr>
+                <tr>
+                    <td>자살 조끼</td>
+                    <td>27m</td>
+                    <td>518m</td>
+                </tr>
+                <tr>
+                    <td>서류가방</td>
+                    <td>37m</td>
+                    <td>564m</td>
+                </tr>
+                <tr>
+                    <td>승용차</td>
+                    <td>98m</td>
+                    <td>564m</td>
+                </tr>
+                <tr>
+                    <td>SUV/밴</td>
+                    <td>122m</td>
+                    <td>732m</td>
+                </tr>
+                <tr>
+                    <td>소형 트럭</td>
+                    <td>195m</td>
+                    <td>1159m</td>
+                </tr>
+        </table>
+    </div>
+    
+        <!-- 지도 섹션 추가 -->
+    <div class="map-section">
+        <h3>안전거리 시각화</h3>
+        <div class="map-controls">
+            <div class="coordinate-inputs">
+                <div class="coordinate-input-group">
+                    <label for="latitude">위도:</label>
+                    <input type="number" id="latitude" step="0.000001" placeholder="예: 37.566826">
+                </div>
+                <div class="coordinate-input-group">
+                    <label for="longitude">경도:</label>
+                    <input type="number" id="longitude" step="0.000001" placeholder="예: 126.978656">
+                </div>
+                <button id="setCoordinate" class="map-button">좌표 이동</button>
+            </div>
+            <div class="map-buttons">
+                <button id="setCenter" class="map-button">현재 위치로 이동</button>
+                <button id="drawCircle" class="map-button">안전거리 표시</button>
+            </div>
+            <p class="coordinate-display">선택된 위치: <span id="selectedCoords">선택된 위치 없음</span></p>
+        </div>
+        <div id="map" style="position: relative;">
+            <div id="distance-info" class="center-distance">
+                중심점으로부터의 거리: <span id="current-distance">0</span> m
+            </div>
+        </div>
+        <div id="distance-tooltip" class="distance-tooltip" style="display: none;"></div>
+    </div>
+</div>
+
+<script>
+    let map;
+    let vectorLayer;
+    let currentPosition;
+    let dragInteraction;
+    let currentMarker;
+    let distanceTooltip;
+    let centerDistanceDisplay;
+
+    // 폭발물 종류별 TNT 환산계수
+    const TNT_FACTORS = {
+        'tnt': 1.0,
+        'c4': 1.37,
+        'semtex': 1.3,
+        'anfo': 0.82,
+        'dynamite': 0.6
+    };
+
+    // 의심물체별 폭발물 무게 (kg)
+    const THREAT_WEIGHTS = {
+        'pipe_bomb': 2.3,
+        'suicide_vest': 4.5,
+        'briefcase': 11.3,
+        'sedan': 227,
+        'suv': 454,
+        'van': 1814,
+        'small_truck': 4536
+    };
+
+    // 의심물체 한글 이름
+    const THREAT_NAMES = {
+        'pipe_bomb': '파이프 폭탄',
+        'suicide_vest': '자살 조끼',
+        'briefcase': '서류가방',
+        'sedan': '승용차',
+        'suv': 'SUV',
+        'van': '밴',
+        'small_truck': '소형 트럭'
+    };
+
+    function calculateSafetyDistance(threatType, explosiveType, kFactor) {
+        const tntFactor = TNT_FACTORS[explosiveType];
+        const weight = THREAT_WEIGHTS[threatType];
+        const tntEquivalentWeight = weight * tntFactor;
+        const safetyDistance = kFactor * Math.pow(tntEquivalentWeight, 1/3);
+        
+        return {
+            tntFactor: tntFactor,
+            weight: weight,
+            tntEquivalentWeight: tntEquivalentWeight,
+            safetyDistance: safetyDistance,
+            threatName: THREAT_NAMES[threatType]
+        };
+    }
+
+    function updateCalculation() {
+    const threatType = document.getElementById('threatType').value;
+        const explosiveType = document.getElementById('explosiveType').value;
+        const kFactor = parseFloat(document.getElementById('kFactor').value);
+
+        const result = calculateSafetyDistance(threatType, explosiveType, kFactor);
+
+        // 1. TNT 환산 계수 업데이트
+        document.getElementById('selectedExplosive').textContent = explosiveType.toUpperCase();
+        document.getElementById('tntFactor').textContent = result.tntFactor;
+
+        // 2. TNT 환산 질량 계산 업데이트
+        document.getElementById('inputWeight').textContent = `${result.weight} kg (${result.threatName})`;
+        document.getElementById('massFormula').textContent = 
+            `${result.weight} kg × ${result.tntFactor}`;
+        document.getElementById('tntMass').textContent = 
+            `${result.tntEquivalentWeight.toFixed(2)} kg`;
+
+        // 3. 안전거리 계산 업데이트
+        document.getElementById('selectedKFactor').textContent = kFactor;
+        document.getElementById('distanceFormula').textContent = 
+            `${kFactor} × (${result.tntEquivalentWeight.toFixed(2)})^(1/3)`;
+        document.getElementById('safetyDistance').textContent = 
+            `${result.safetyDistance.toFixed(2)} 미터`;
+    }
+
+    // 지도 초기화
+    function initMap() {
+        vectorLayer = new ol.layer.Vector({
+            source: new ol.source.Vector()
+        });
+
+        map = new ol.Map({
+            target: 'map',
+            layers: [
+                new ol.layer.Tile({
+                    source: new ol.source.OSM()
+                }),
+                vectorLayer
+            ],
+            view: new ol.View({
+                center: ol.proj.fromLonLat([126.978656, 37.566826]), // 서울 시청
+                zoom: 15
+            })
+        });
+
+        // 드래그 상호작용 추가
+        dragInteraction = new ol.interaction.Modify({
+            source: vectorLayer.getSource(),
+            pixelTolerance: 20,
+            style: new ol.style.Style({
+                image: new ol.style.Circle({
+                    radius: 10,
+                    fill: new ol.style.Fill({
+                        color: '#ff0000'
+                    }),
+                    stroke: new ol.style.Stroke({
+                        color: '#ffffff',
+                        width: 2
+                    })
+                })
+            })
+        });
+
+        map.addInteraction(dragInteraction);
+
+        // 마커 드래그 종료 시 이벤트
+        dragInteraction.on('modifyend', function(evt) {
+            const features = evt.features.getArray();
+            if (features.length > 0) {
+                const coords = features[0].getGeometry().getCoordinates();
+                const lonLat = ol.proj.transform(coords, 'EPSG:3857', 'EPSG:4326');
+                updateCoordinateDisplay(lonLat[1], lonLat[0]);
+                currentPosition = coords;
+                
+                // 안전거리 원이 있다면 업데이트
+                updateSafetyCircle();
+            }
+        });
+
+        // 지도 클릭 이벤트 처리
+        map.on('click', function(evt) {
+            const coords = ol.proj.transform(evt.coordinate, 'EPSG:3857', 'EPSG:4326');
+            setMarkerPosition(coords[1], coords[0]); // 위도, 경도 순서로 전달
+        });
+
+        // 거리 표시 툴팁 초기화
+        distanceTooltip = document.getElementById('distance-tooltip');
+        centerDistanceDisplay = document.getElementById('current-distance');
+
+        // 마우스 이동 이벤트 처리
+        map.on('pointermove', function(evt) {
+            const pixel = map.getEventPixel(evt.originalEvent);
+            const hit = map.hasFeatureAtPixel(pixel);
+            map.getTargetElement().style.cursor = hit ? 'pointer' : '';
+
+            if (currentPosition) {
+                const mouseCoord = evt.coordinate;
+                const distance = calculateDistance(currentPosition, mouseCoord);
+                
+                // 거리 정보 업데이트
+                centerDistanceDisplay.textContent = Math.round(distance);
+
+                // 툴팁 위치 업데이트
+                const tooltipPixel = map.getEventPixel(evt.originalEvent);
+                distanceTooltip.style.display = 'block';
+                distanceTooltip.style.left = (tooltipPixel[0] + 10) + 'px';
+                distanceTooltip.style.top = (tooltipPixel[1] + 10) + 'px';
+                distanceTooltip.textContent = `거리: ${Math.round(distance)}m`;
+            }
+        });
+
+        // 마우스가 지도를 벗어날 때 툴팁 숨기기
+        map.getViewport().addEventListener('mouseout', function() {
+            distanceTooltip.style.display = 'none';
+        });
+    }
+
+    // 좌표 표시 업데이트 함수
+    function updateCoordinateDisplay(lat, lon) {
+        document.getElementById('latitude').value = lat.toFixed(6);
+        document.getElementById('longitude').value = lon.toFixed(6);
+        document.getElementById('selectedCoords').textContent = 
+            `위도: ${lat.toFixed(6)}, 경도: ${lon.toFixed(6)}`;
+    }
+
+    // 마커 위치 설정 및 좌표 표시 함수
+    function setMarkerPosition(lat, lon) {
+        updateCoordinateDisplay(lat, lon);
+        
+        const coords = ol.proj.fromLonLat([lon, lat]);
+        currentPosition = coords;
+
+        // 기존 마커와 원 제거
+        vectorLayer.getSource().clear();
+
+        // 새 마커 생성
+        currentMarker = new ol.Feature({
+            geometry: new ol.geom.Point(coords)
+        });
+
+        currentMarker.setStyle(new ol.style.Style({
+            image: new ol.style.Circle({
+                radius: 8,
+                fill: new ol.style.Fill({
+                    color: '#ff0000'
+                }),
+                stroke: new ol.style.Stroke({
+                    color: '#ffffff',
+                    width: 2
+                })
+            })
+        }));
+
+        vectorLayer.getSource().addFeature(currentMarker);
+
+        // 지도 중심 이동
+        map.getView().animate({
+            center: coords,
+            duration: 1000
+        });
+
+        // 안전거리 원이 있었다면 업데이트
+        updateSafetyCircle();
+    }
+
+    // 안전거리 원 업데이트 함수
+    function updateSafetyCircle() {
+        if (!currentPosition) {
+            alert('먼저 위치를 선택해주세요.');
+            return;
+        }
+
+        const safetyDistanceText = document.getElementById('safetyDistance').textContent;
+        const safetyDistance = parseFloat(safetyDistanceText);
+
+        if (!isNaN(safetyDistance)) {
+            // 기존 원 제거
+            const features = vectorLayer.getSource().getFeatures();
+            features.forEach(feature => {
+                if (feature.getGeometry() instanceof ol.geom.Circle) {
+                    vectorLayer.getSource().removeFeature(feature);
+                }
+            });
+
+            // 새 원 생성
+            const circle = new ol.Feature({
+                geometry: new ol.geom.Circle(currentPosition, safetyDistance)
+            });
+
+            // 원 스타일 설정
+            circle.setStyle(new ol.style.Style({
+                stroke: new ol.style.Stroke({
+                    color: 'rgba(255, 0, 0, 0.8)',
+                    width: 2
+                }),
+                fill: new ol.style.Fill({
+                    color: 'rgba(255, 0, 0, 0.1)'
+                })
+            }));
+
+            // 거리 표시 원 추가 (25%, 50%, 75% 거리에 원 추가)
+            [0.25, 0.5, 0.75].forEach(ratio => {
+                const intermediateCircle = new ol.Feature({
+                    geometry: new ol.geom.Circle(currentPosition, safetyDistance * ratio)
+                });
+                
+                intermediateCircle.setStyle(new ol.style.Style({
+                    stroke: new ol.style.Stroke({
+                        color: 'rgba(255, 0, 0, 0.4)',
+                        width: 1,
+                        lineDash: [5, 5]
+                    }),
+                    text: new ol.style.Text({
+                        text: `${Math.round(safetyDistance * ratio)}m`,
+                        fill: new ol.style.Fill({
+                            color: 'rgba(255, 0, 0, 0.8)'
+                        }),
+                        stroke: new ol.style.Stroke({
+                            color: 'white',
+                            width: 3
+                        }),
+                        offsetY: -10
+                    })
+                }));
+
+                vectorLayer.getSource().addFeature(intermediateCircle);
+            });
+
+            vectorLayer.getSource().addFeature(circle);
+
+            // 최대 거리 표시
+            const maxDistanceLabel = new ol.Feature({
+                geometry: new ol.geom.Point(currentPosition)
+            });
+
+            maxDistanceLabel.setStyle(new ol.style.Style({
+                text: new ol.style.Text({
+                    text: `최대 안전거리: ${Math.round(safetyDistance)}m`,
+                    fill: new ol.style.Fill({
+                        color: 'rgba(255, 0, 0, 0.8)'
+                    }),
+                    stroke: new ol.style.Stroke({
+                        color: 'white',
+                        width: 3
+                    }),
+                    offsetY: 20
+                })
+            }));
+
+            vectorLayer.getSource().addFeature(maxDistanceLabel);
+
+            // 원이 보이도록 지도 뷰 조정
+            const extent = circle.getGeometry().getExtent();
+            map.getView().fit(extent, {
+                padding: [50, 50, 50, 50],
+                duration: 1000
+            });
+        }
+    }
+
+    // 현재 위치로 이동
+    function moveToCurrentLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                setMarkerPosition(position.coords.latitude, position.coords.longitude);
+            });
+        } else {
+            alert('위치 정보를 사용할 수 없습니다.');
+        }
+    }
+
+    // 안전거리 원 그리기
+    function drawSafetyCircle() {
+        if (!currentPosition) {
+            alert('먼저 위치를 선택해주세요.');
+            return;
+        }
+
+        updateSafetyCircle();
+
+        // 원이 보이도록 지도 뷰 조정
+        const safetyDistance = parseFloat(document.getElementById('safetyDistance').textContent);
+        if (!isNaN(safetyDistance)) {
+            const extent = ol.extent.buffer(
+                ol.extent.createEmpty(),
+                currentPosition,
+                safetyDistance * 1.2
+            );
+            map.getView().fit(extent, {
+                padding: [50, 50, 50, 50],
+                duration: 1000
+            });
+        }
+    }
+
+    // 좌표로 이동하는 함수
+    function moveToCoordinate() {
+        const lat = parseFloat(document.getElementById('latitude').value);
+        const lon = parseFloat(document.getElementById('longitude').value);
+        
+        if (!isNaN(lat) && !isNaN(lon)) {
+            setMarkerPosition(lat, lon);
+        } else {
+            alert('올바른 좌표를 입력해주세요.');
+        }
+    }
+
+    // 두 지점 간의 거리 계산 함수
+    function calculateDistance(point1, point2) {
+        return Math.sqrt(
+            Math.pow(point1[0] - point2[0], 2) + 
+            Math.pow(point1[1] - point2[1], 2)
+        );
+    }
+
+    // 이벤트 리스너 등록
+    document.addEventListener('DOMContentLoaded', function() {
+        // 기존 이벤트 리스너 유지
+        const calculateBtn = document.getElementById('calculateBtn');
+        calculateBtn.addEventListener('click', function() {
+            updateCalculation();
+            if (currentPosition) {
+                updateSafetyCircle();
+            }
+        });
+        
+        // 지도 초기화
+        initMap();
+
+        // 지도 컨트롤 버튼 이벤트 리스너
+        document.getElementById('setCenter').addEventListener('click', moveToCurrentLocation);
+        document.getElementById('drawCircle').addEventListener('click', drawSafetyCircle);
+        document.getElementById('setCoordinate').addEventListener('click', moveToCoordinate);
+
+        // 초기 계산 실행
+        updateCalculation();
+    });
+</script>
+</body>
+</html>
