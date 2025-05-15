@@ -556,13 +556,14 @@
             </div>
 
         <label for="explosiveType">폭발물 종류</label>
-        <select id="explosiveType">
-                <option value="" disabled selected>폭발물 종류를 선택하세요</option>
-                <option value="tnt">TNT</option>
-                <option value="c4">C4</option>
-                <option value="semtex">Semtex</option>
-                <option value="anfo">ANFO</option>
-                <option value="dynamite">다이너마이트</option>
+        <select id="explosiveType" class="form-select">
+            <option value="" selected>선택</option>
+            <option value="tnt">TNT</option>
+            <option value="c4">C4</option>
+            <option value="semtex">Semtex</option>
+            <option value="dynamite">다이너마이트</option>
+            <option value="blackpowder">흑색화약</option>
+            <option value="custom">사용자 정의 (kg)</option>
         </select>
 
         <label for="kFactor">안전거리 계수 (K-Factor)</label>
@@ -658,7 +659,8 @@
         'c4': 1.37,
         'semtex': 1.3,
         'anfo': 0.82,
-        'dynamite': 0.6
+        'dynamite': 0.6,
+        'blackpowder': 0.55
     };
 
     // 의심물체별 폭발물 무게 (kg)
